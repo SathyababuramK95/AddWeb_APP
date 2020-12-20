@@ -4,6 +4,7 @@ import { MDBContainer, MDBRow, MDBCol, MDBCard, MDBCardBody, MDBInput, MDBBtn, M
 import { ROUTEPATH } from '../../common/appConstants';
 import { API_URL } from '../../common/appConstants';
 import { httpPost } from '../../httpClient/httpClient';
+import AlertComponent from '../alertcomponent';
 
 
 const Signup = (props) => {
@@ -11,6 +12,8 @@ const Signup = (props) => {
     let [emailid, setEmail] = useState('');
     let [username, setUsername] = useState('');
     let [password, setPassword] = useState('');
+    let [model, setModel] = useState(false)
+    let [errorValue, setErrorValue] = useState('');
 
     function inputChange(value, type) {
         if (type == 'username') {
@@ -22,21 +25,27 @@ const Signup = (props) => {
         }
     }
 
+    function showAlertComponent(errorValue) {
+        setErrorValue(errorValue);
+        setModel(!model)
+    }
+
 
     async function doSignin() {
         if (!username || !password || !emailid) {
-            alert("please fill all the details");
+            showAlertComponent("please fill all the details");
         }
         if (emailid && !(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(emailid))) {
-            alert("Entered email was invalid");
+            showAlertComponent("Entered email was invalid");
+        } else {
+            let savedData = await httpPost(API_URL.SAVEUSER, { username: username, password: password, emailid: emailid });
+            if (savedData.user) {
+                props.history.push(ROUTEPATH.INDEX);
+            }
+            else if (!savedData && savedData.error) {
+                showAlertComponent("Error while sign in");
+            }
         }
-
-    
-        let savedData = await httpPost(API_URL.SAVEUSER, { username: username, password: password, emailid: emailid });
-        if (savedData) {
-            props.history.push(ROUTEPATH.INDEX);
-        }
-       
     }
 
     function goToLogin() {
@@ -45,6 +54,8 @@ const Signup = (props) => {
 
     return (
         <MDBContainer>
+            <AlertComponent model={model} errorText={errorValue} onChange={() => showAlertComponent()}>
+            </AlertComponent>
             <MDBRow className="justify-content-center align-items-center">
                 <MDBCol md="6">
                     <MDBCard className="Carddiv">

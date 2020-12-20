@@ -6,12 +6,14 @@ import { API_URL } from '../../common/appConstants';
 import { httpPost } from '../../httpClient/httpClient';
 import { connect } from 'react-redux';
 import { changeLoginStatus, storeUserDetail } from '../../state/actions';
-
+import AlertComponent from '../alertcomponent';
 
 const Login = (props) => {
 
     let [emailid, setEmail] = useState('');
     let [password, setPassword] = useState('');
+    let [model, setModel] = useState(false)
+    let [errorValue, setErrorValue] = useState('');
 
 
     function inputChange(value, type) {
@@ -25,20 +27,25 @@ const Login = (props) => {
 
     async function doLogin() {
         if (!password || !emailid) {
-            alert("please fill all the details");
+            showAlertComponent("please fill all the details");
         }
         if (emailid && !(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(emailid))) {
-            alert("Entered email was invalid");
-        }
-
-        let userData = await httpPost(API_URL.GETUSER, { password: password, emailid: emailid });
-        if (userData && userData.error) {
-            alert("error while logging in");
+            showAlertComponent("Invalid Email id,please enter valid email id");
         } else {
-            props.changeLoginStatus(true);
-            props.storeUserDetail(userData.userData);
-            props.history.push(ROUTEPATH.DASHBOARD);
+            let userData = await httpPost(API_URL.GETUSER, { password: password, emailid: emailid });
+            if (userData && userData.error) {
+                showAlertComponent("error while logging in");
+            } else if (userData && userData.token) {
+                props.changeLoginStatus(true);
+                props.storeUserDetail(userData.userData);
+                props.history.push(ROUTEPATH.DASHBOARD);
+            }
         }
+    }
+
+    function showAlertComponent(errorValue) {
+        setErrorValue(errorValue);
+        setModel(!model)
     }
 
     function goToSignin() {
@@ -46,7 +53,10 @@ const Login = (props) => {
     }
 
     return (
+
         <MDBContainer>
+            <AlertComponent model={model} errorText={errorValue} onChange={() => showAlertComponent()}>
+            </AlertComponent>
             <MDBRow className="justify-content-center align-items-center">
                 <MDBCol md="6">
                     <MDBCard className="Carddiv">

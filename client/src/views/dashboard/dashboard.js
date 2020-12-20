@@ -8,6 +8,7 @@ import { ROUTEPATH } from '../../common/appConstants';
 import { API_URL } from '../../common/appConstants';
 import { httpPost } from '../../httpClient/httpClient';
 import Store from '../../state/store';
+import AlertComponent from '../alertcomponent';
 
 
 
@@ -29,6 +30,8 @@ const Dashboard = (props) => {
     let [dateofbirth, setDate] = useState('');
     let [image, setImage] = useState('');
     let [address, setAddress] = useState('');
+    let [model, setModel] = useState(false)
+    let [errorValue, setErrorValue] = useState('');
 
     function inputChange(value, type) {
         if (type == 'firstname') {
@@ -63,25 +66,34 @@ const Dashboard = (props) => {
         }
     }
 
+    function showAlertComponent(errorValue) {
+        setErrorValue(errorValue);
+        setModel(!model)
+    }
+
     const doStudentRegistration = async () => {
         if (!firstname || !lastname || !emailid || !fathername) {
-            alert("please fill all the details");
+            showAlertComponent("please fill all the details");
         }
         if (emailid && !(/^[a-zA-Z0-9.!#$%&'*+/=?^_`{|}~-]+@[a-zA-Z0-9-]+(?:\.[a-zA-Z0-9-]+)*$/.test(emailid))) {
-            alert("Entered email was invalid");
-        }
-
-
-        let savedData = await httpPost(API_URL.REGISTERSTUDENT, {
-        });
-        if (savedData) {
-            props.history.push(ROUTEPATH.Dashboard);
+            showAlertComponent("Entered email was invalid");
+        }else{
+            let savedData = await httpPost(API_URL.REGISTERSTUDENT, {
+            });
+            if (savedData && savedData.student) {
+                props.history.push(ROUTEPATH.Dashboard);
+            }
+            else if(savedData.error){
+                showAlertComponent("Error while adding new student")
+            }
         }
     }
 
 
     return (
         <div>
+            <AlertComponent model={model} errorText={errorValue} onChange={() => showAlertComponent()}>
+            </AlertComponent>
             <MDBNavbar color="indigo" dark expand="md">
                 <MDBNavbarBrand>
                     <strong className="white-text">Welcome</strong>
